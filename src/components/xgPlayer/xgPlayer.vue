@@ -1,12 +1,12 @@
 <template>
   <div
-    class="w-full h-full rounded-lg"
+    class="w-full h-full"
     :id="id"
   ></div>
 </template>
 
 <script setup>
-import { onMounted, watch, watchEffect } from "vue";
+import { onMounted, watch } from "vue";
 import Player from "xgplayer";
 
 const props = defineProps({

@@ -48,14 +48,14 @@
                       <van-icon name="ellipsis" class="header-right-icon" />
                     </div>
                   </div>
-                  <div class="list-content w-full h-80 ">
+                  <div class="list-content w-full h-80 mt-5">
                     <xg-player
                       :id="`home-video-${item.user.userId}`"
                       :video-url="handleDecrypt('video', item.joke.videoUrl)"
                       :poster="handleDecrypt('image', item.joke.thumbUrl)"
                       width="100%"
                       :other-options="{
-                        otherOptions:true
+                        otherOptions: true,
                       }"
                     />
                   </div>
@@ -78,7 +78,6 @@ import { homeService } from "@/api/modules/home";
 import { decryptDes, encryptDes } from "@/utils/crypto";
 import XgPlayer from "@/components/xgPlayer/xgPlayer.vue";
 
-
 const loading = ref(false);
 const homeList = ref([]);
 const tabsData = ref({
@@ -86,7 +85,7 @@ const tabsData = ref({
   list: [
     {
       id: 0,
-      name: "关注"
+      name: "关注",
     },
     // {
     //   id: 1,
@@ -94,17 +93,17 @@ const tabsData = ref({
     // },
     {
       id: 2,
-      name: "新鲜"
+      name: "新鲜",
     },
     {
       id: 3,
-      name: "纯文"
+      name: "纯文",
     },
     {
       id: 4,
-      name: "趣图"
-    }
-  ]
+      name: "趣图",
+    },
+  ],
 });
 
 const router = useRouter();
@@ -118,7 +117,7 @@ watch(
       return showConfirmDialog({
         title: "提示",
         message: "暂未登录，请先登录",
-        confirmButtonText: "去登录"
+        confirmButtonText: "去登录",
       })
         .then(() => {
           router.push("/login");
@@ -204,7 +203,7 @@ getHomeData();
   }
 
   .info-signature {
-    font-size: 14px;
+    font-size: 12px;
     color: var(--van-text-color-2);
     width: 180px;
   }
@@ -227,7 +226,7 @@ getHomeData();
 //  overflow: auto;
 //  height: calc(100% - 45px);
 //}
-:deep(.van-sticky--fixed){
+:deep(.van-sticky--fixed) {
   z-index: 99999;
 }
 </style>
