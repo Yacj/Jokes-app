@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="w-full h-full"
-    :id="id"
-  ></div>
+  <div class="w-full h-full" :id="id"></div>
 </template>
 
 <script setup>
@@ -12,43 +9,42 @@ import Player from "xgplayer";
 const props = defineProps({
   id: {
     type: String,
-    required: true
+    required: true,
   },
   videoUrl: {
     type: String,
-    required: true
+    required: true,
   },
   poster: {
     type: String,
     default: () =>
-      "http://lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/byted-player-videos/1.0.0/poster.jpg"
+      "http://lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/byted-player-videos/1.0.0/poster.jpg",
   },
   playsinline: {
     type: Boolean,
-    default: true
+    default: true,
   },
   width: {
     type: String,
-    default: "100%"
+    default: "100%",
   },
   height: {
     type: String,
-    default: "100%"
+    default: "100%",
   },
   otherOptions: {
     type: Object,
     default: () => ({
       autoplay: true,
       rotateFullscreen: true,
-      controls: true
-    })
-  }
+      controls: true,
+    }),
+  },
 });
 
 watch(
   () => props.videoUrl,
   (newUrl) => {
-    console.log(newUrl);
     initPlayer();
   }
 );
@@ -59,7 +55,7 @@ onMounted(() => {
 
 // 初始化西瓜视频
 const initPlayer = () => {
-  let player = new Player({
+  new Player({
     id: props.id,
     url: props.videoUrl,
     poster: props.poster,
@@ -74,10 +70,10 @@ const initPlayer = () => {
       col: 10,
       row: 10,
       urls: [
-        "//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/byted-player-videos/1.0.0/xgplayer-demo-thumbnail.jpg"
-      ]
+        "//lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/byted-player-videos/1.0.0/xgplayer-demo-thumbnail.jpg",
+      ],
     },
-    whitelist: [""]
+    whitelist: [""],
   });
   //  超清、高清、标清 分别对应的地址
   // player.emit('resourceReady', [{ name: '超清', url: '//sf1-cdn-tos.huoshanstatic.com/obj/media-fe/xgplayer_doc_video/mp4/xgplayer-demo-720p.mp4' }, { name: '高清', url: '//sf1-cdn-tos.huoshanstatic.com/obj/media-fe/xgplayer_doc_video/mp4/xgplayer-demo-480p.mp4' }, { name: '标清', url: '//sf1-cdn-tos.huoshanstatic.com/obj/media-fe/xgplayer_doc_video/mp4/xgplayer-demo-360p.mp4' }]);

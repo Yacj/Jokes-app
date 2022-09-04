@@ -2,7 +2,7 @@ import request from "@/api";
 
 export const homeService = {
   recommend: (params) => {
-    return request.post("home/attention/recommend", params);
+    return request.post("home/recommend", params);
   },
   latest: (params) => {
     return request.post("home/latest", params);

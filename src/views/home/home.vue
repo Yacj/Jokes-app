@@ -1,37 +1,52 @@
 <template>
-  <van-pull-refresh
-    v-model="loading"
-    @refresh="onRefresh"
-    success-text="刷新成功"
-  >
-    <div class="home px-3 pt-3 h-full">
-      <van-sticky>
-        <div class="home-search">
-          <van-search shape="round" placeholder="请搜索内容" />
-        </div>
-      </van-sticky>
-      <div class="home-tab w-[100%]">
-        <van-tabs v-model:active="tabsData.active" :sticky="true">
-          <van-tab
+  <div class="home h-full">
+    <div class="home-tab w-[100%]">
+      <van-tabs
+          v-model:active="tabsData.active"
+          :sticky="true"
+          shrink
+          swipeable
+          animated
+      >
+        <template #nav-right>
+          <div
+              class="home-search flex-center text-700 text-xl font-bold w-full"
+          >
+            <van-icon name="search"/>
+          </div>
+        </template>
+        <van-tab
             v-for="item in tabsData.list"
             :key="item.id"
             :name="item.id"
             :title="item.name"
+        >
+          <van-pull-refresh
+              v-model="loading"
+              @refresh="onRefresh"
+              success-text="刷新成功"
           >
-            <div class="home-list mt-5">
-              <ul>
-                <li
-                  v-for="(item, index) in homeList"
-                  :key="item.user.userId"
-                  class="mb-7"
-                >
+            <van-list
+                v-model:loading="listOptions.loading"
+                :finished="listOptions.finished"
+                :finished-text="listOptions.finishedText"
+                @load="handleListLoad"
+                :offset="50"
+                :immediate-check="false"
+            >
+              <div
+                  v-for="item in homeList"
+                  :key="item.joke.jokesId"
+                  class="mb-3"
+              >
+                <div class="px-3">
                   <div class="list-header flex justify-between">
                     <div class="list-header-left flex-center">
                       <div class="header-left-avatar mr-3">
                         <van-image
-                          round
-                          class="w-[50px] h-[50px]"
-                          :src="item.user.avatar"
+                            round
+                            class="w-[50px] h-[50px]"
+                            :src="item.user.avatar"
                         />
                       </div>
                       <div class="header-left-info">
@@ -45,52 +60,76 @@
                     </div>
                     <div class="left-header-right flex justify-center">
                       <div class="list-header-more">+ 关注</div>
-                      <van-icon name="ellipsis" class="header-right-icon" />
+                      <van-icon name="ellipsis" class="header-right-icon"/>
                     </div>
                   </div>
-                  <div class="list-content w-full h-80 mt-5">
+                  <div
+                      class="list-content w-full mt-3"
+                      :class="{
+                      'h-80': item.joke.type >= 3,
+                    }"
+                  >
                     <xg-player
-                      :id="`home-video-${item.user.userId}`"
-                      :video-url="handleDecrypt('video', item.joke.videoUrl)"
-                      :poster="handleDecrypt('image', item.joke.thumbUrl)"
-                      width="100%"
-                      :other-options="{
-                        otherOptions: true,
+                        :id="`home-video-${Math.ceil(Math.random() * 121)}`"
+                        :video-url="handleDecrypt(item.joke.videoUrl)"
+                        :poster="handleDecrypt(item.joke.thumbUrl)"
+                        :other-options="{
+                        controls: true,
                       }"
+                        v-if="item.joke.type >= 3"
                     />
+                    <div v-if="item.joke.type === 1">
+                      {{ item.joke.content }}
+                    </div>
+                    <div v-if="item.joke.type === 2">
+                      {{ item.joke.content }}
+                      <div
+                          :class="getImgHeight(item.joke.imageSize)"
+                          class="mt-3"
+                      >
+                        <van-image :src="handleDecrypt(item.joke.imageUrl)"/>
+                      </div>
+                    </div>
                   </div>
-                </li>
-              </ul>
-            </div>
-          </van-tab>
-        </van-tabs>
-      </div>
+                </div>
+                <div class="border-b-10 border-gray-100 mt-3"></div>
+              </div>
+            </van-list>
+          </van-pull-refresh>
+        </van-tab>
+      </van-tabs>
     </div>
-  </van-pull-refresh>
+  </div>
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
-import { useUserStore } from "@/stores/modules/user";
-import { showConfirmDialog, showSuccessToast } from "vant";
-import { useRouter } from "vue-router";
-import { homeService } from "@/api/modules/home";
-import { decryptDes, encryptDes } from "@/utils/crypto";
+import {computed, ref, watch} from "vue";
+import {useUserStore} from "@/stores/modules/user";
+import {
+  closeToast,
+  showConfirmDialog,
+  showLoadingToast,
+  showSuccessToast,
+} from "vant";
+import {useRouter} from "vue-router";
+import {homeService} from "@/api/modules/home";
+import {decryptDes} from "@/utils/crypto";
 import XgPlayer from "@/components/xgPlayer/xgPlayer.vue";
+import {getImgSize} from "@/utils";
 
 const loading = ref(false);
 const homeList = ref([]);
 const tabsData = ref({
-  active: 2,
+  active: 1,
   list: [
     {
       id: 0,
       name: "关注",
     },
-    // {
-    //   id: 1,
-    //   name: "推荐"
-    // },
+    {
+      id: 1,
+      name: "推荐",
+    },
     {
       id: 2,
       name: "新鲜",
@@ -105,29 +144,33 @@ const tabsData = ref({
     },
   ],
 });
-
+const listOptions = ref({
+  loading: false,
+  finished: false,
+  finishedText: "没有更多了",
+});
 const router = useRouter();
 const userStore = useUserStore();
 const token = userStore.token;
 
 watch(
-  () => tabsData.value.active,
-  (val) => {
-    if (val === 0 && !token) {
-      return showConfirmDialog({
-        title: "提示",
-        message: "暂未登录，请先登录",
-        confirmButtonText: "去登录",
-      })
-        .then(() => {
-          router.push("/login");
+    () => tabsData.value.active,
+    (val) => {
+      if (val === 0 && !token) {
+        return showConfirmDialog({
+          title: "提示",
+          message: "暂未登录，请先登录",
+          confirmButtonText: "去登录",
         })
-        .catch(() => {
-          tabsData.value.active = 2;
-        });
+            .then(() => {
+              router.push("/login");
+            })
+            .catch(() => {
+              tabsData.value.active = 2;
+            });
+      }
+      homeList.value = [];
     }
-    getHomeData();
-  }
 );
 
 const onRefresh = () => {
@@ -137,6 +180,24 @@ const onRefresh = () => {
   setTimeout(() => {
     loading.value = false;
   }, 1000);
+};
+
+const handleDecrypt = (data) => {
+  const val = data.replace(/^ftp:\/\//, "");
+  return decryptDes(val);
+};
+
+const getImgHeight = (size) => {
+  const height = size.split("x")[1];
+  if (+height > 288) {
+    return `max-w-1/2 h-[200px] overflow-hidden`;
+  } else {
+    return `max-w-1/2 overflow-auto`;
+  }
+};
+const handleListLoad = () => {
+  listOptions.value.loading = false;
+  getHomeData();
 };
 
 const getHomeData = async () => {
@@ -156,15 +217,11 @@ const getHomeData = async () => {
       data = await homeService.pic().then((res) => res.data);
       break;
   }
-  homeList.value = data;
-};
-const handleDecrypt = (type, data) => {
-  const val = data.replace(/^ftp:\/\//, "");
-  switch (type) {
-    case "video":
-      return decryptDes(val);
-    case "image":
-      return decryptDes(val);
+  if (data.length === 0) {
+    listOptions.value.finished = true;
+  } else {
+    homeList.value.push(...data);
+    listOptions.value.finished = false;
   }
 };
 getHomeData();
@@ -182,10 +239,6 @@ getHomeData();
 :deep(.van-tabs__line) {
   display: none;
 }
-
-//.van-pull-refresh {
-//  height: 100vh;
-//}
 
 .home {
   background: var(--van-background-2);
@@ -222,11 +275,23 @@ getHomeData();
   }
 }
 
-//.home-list{
-//  overflow: auto;
-//  height: calc(100% - 45px);
-//}
 :deep(.van-sticky--fixed) {
   z-index: 99999;
+}
+
+:deep(.van-tab--shrink) {
+  padding: 0 15px;
+}
+
+:deep(.van-image__img, .van-image__error, .van-image__loading) {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.van-list{
+  height: calc(100vh - 5px);
+  overflow: scroll;
 }
 </style>

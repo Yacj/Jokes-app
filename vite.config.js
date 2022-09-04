@@ -27,6 +27,7 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       open: true,
+      host: "0.0.0.0",
       proxy: {
         "/api": {
           target: config.VITE_APP_API_BASEURL,
